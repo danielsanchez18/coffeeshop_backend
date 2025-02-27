@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.daniel.sanchez.ecommerce</groupId>
-    <artifactId>coffeshop_backend</artifactId>
+    <artifactId>coffeeshop_backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>coffeshop_backend</name>
-    <description>coffeshop_backend</description>
+    <name>coffeeshop_backend</name>
+    <description>coffeeshop_backend</description>
     <url/>
     <licenses>
         <license/>
