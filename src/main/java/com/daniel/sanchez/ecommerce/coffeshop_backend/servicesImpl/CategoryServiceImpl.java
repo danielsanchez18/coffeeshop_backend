@@ -98,4 +98,5 @@ public class CategoryServiceImpl implements CategoryService {
             throw new IllegalArgumentException("La categoría no puede ser eliminada porque tiene productos asociados");
         }
     }
+
 }

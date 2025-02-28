@@ -16,7 +16,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/product")
+@CrossOrigin("*")
 public class ProductController {
 
     @Autowired

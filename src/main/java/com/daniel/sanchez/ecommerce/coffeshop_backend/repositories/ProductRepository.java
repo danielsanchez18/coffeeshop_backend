@@ -33,18 +33,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             Pageable pageable
     );
 
-    // Obtener productos más pedidos (basado en cantidad de veces que aparecen en OrderItem)
-    @Query("SELECT p FROM Product p " +
-            "JOIN p.orderItems oi " +
-            "GROUP BY p.id " +
-            "ORDER BY SUM(oi.quantity) DESC")
+    @Query("SELECT p FROM Product p LEFT JOIN p.orderItems oi GROUP BY p ORDER BY COUNT(oi) DESC")
     Page<Product> findMostOrdered(Pageable pageable);
 
-    // Obtener productos menos pedidos (basado en cantidad de veces que aparecen en OrderItem)
-    @Query("SELECT p FROM Product p " +
-            "JOIN p.orderItems oi " +
-            "GROUP BY p.id " +
-            "ORDER BY SUM(oi.quantity) ASC")
+    @Query("SELECT p FROM Product p LEFT JOIN p.orderItems oi GROUP BY p ORDER BY COUNT(oi) ASC")
     Page<Product> findLessOrdered(Pageable pageable);
 
     @Query("SELECT oi.product FROM OrderItem oi " +
