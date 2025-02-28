@@ -14,13 +14,15 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     Optional<Category> findByName(String name);
 
+    boolean existsByProductsCategoryId(Long id);
+
     Page<Category> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
     @Query("SELECT c, COUNT(o.id) AS popularity " +
             "FROM Category c " +
             "JOIN Product p ON c.id = p.category.id " +
-            "JOIN OrderItem oi ON p.id = oi.id " +
-            "JOIN Order o ON oi.id = o.id " +
+            "JOIN OrderItem oi ON p.id = oi.product.id " +
+            "JOIN Order o ON oi.order.id = o.id " +
             "GROUP BY c.id " +
             "ORDER BY popularity DESC")
     Page<Category> findMostPopular(Pageable pageable);
@@ -28,8 +30,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("SELECT c, COUNT(o.id) AS popularity " +
             "FROM Category c " +
             "JOIN Product p ON c.id = p.category.id " +
-            "JOIN OrderItem oi ON p.id = oi.id " +
-            "JOIN Order o ON oi.id = o.id " +
+            "JOIN OrderItem oi ON p.id = oi.product.id " +
+            "JOIN Order o ON oi.order.id = o.id " +
             "GROUP BY c.id " +
             "ORDER BY popularity ASC")
     Page<Category> findUnPopular(Pageable pageable);

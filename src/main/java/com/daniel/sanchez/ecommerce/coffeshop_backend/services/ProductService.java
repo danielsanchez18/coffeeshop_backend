@@ -18,16 +18,29 @@ public interface ProductService {
 
     Optional<Product> findById(UUID id);
 
-    Page<Product> findByName(String name);
-
-    // FILTROS
-
-    // Obtener los productos mas pedidos
-    // Obtener los productos menos pedidos
-    // Obtener los pedidos favoritos de un usuario
+    Long getTotal();
 
     Product update(UUID id, Product product);
 
     void delete(UUID id);
+
+    // Filtrados
+    Page<Product> searchProducts(
+            String name,
+            Long idCategory,
+            Boolean available,
+            Double minPrice,
+            Double maxPrice,
+            Pageable pageable
+    );
+
+    // Obtener los productos mas pedidos
+    Page<Product> findMostOrdered(Pageable pageable);
+
+    // Obtener los productos menos pedidos
+    Page<Product> findLessOrdered(Pageable pageable);
+
+    // Obtener el producto favorito de un usuario
+    Product findFavoriteProductByUser(UUID idUser);
 
 }

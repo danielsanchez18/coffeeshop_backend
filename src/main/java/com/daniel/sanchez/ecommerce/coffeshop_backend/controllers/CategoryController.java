@@ -100,8 +100,8 @@ public class CategoryController {
     @GetMapping("/total")
     public ResponseEntity<?> getTotal() {
         try {
-            Long totalCategories = categoryService.getTotal();
-            return ResponseEntity.ok(ResponseUtil.successResponse("Total de categorías", totalCategories));
+            Long total = categoryService.getTotal();
+            return ResponseEntity.ok(ResponseUtil.successResponse("Total de categorías", total));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ResponseUtil.errorResponse("Error al obtener el total de categorías"));

@@ -17,15 +17,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    // MÉTODOS DE VALIDACIÓN:
-
-    // Validar un único nombre
-
-    // Validar que la categoría elimina no contenga productos
-
     @Override
     public Category create(Category category) {
-        return null;
+        validateCategoryName(category.getName());
+        return categoryRepository.save(category);
     }
 
     @Override
@@ -65,12 +60,42 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Category update(Long id, Category category) {
-        return null;
+        validateCategoryName(category.getName());
+        validateCategoryExists(id);
+        category.setId(id);
+        return categoryRepository.save(category);
     }
 
     @Override
     public void delete(Long id) {
+        validateCategoryCanBeDeleted(id);
         categoryRepository.deleteById(id);
     }
 
+
+
+    // MÉTODOS DE VALIDACIÓN
+
+    private void validateCategoryName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre de la categoría no puede estar vacío");
+        }
+        if (categoryRepository.findByName(name).isPresent()) {
+            throw new IllegalArgumentException("El nombre de la categoría ya existe");
+        }
+    }
+
+    private void validateCategoryExists(Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new IllegalArgumentException("La categoría con el ID especificado no existe");
+        }
+    }
+
+    // Validar que la categoría elimina no contenga productos
+    private void validateCategoryCanBeDeleted(Long id) {
+        boolean hasProducts = categoryRepository.existsByProductsCategoryId(id);
+        if (hasProducts) {
+            throw new IllegalArgumentException("La categoría no puede ser eliminada porque tiene productos asociados");
+        }
+    }
 }

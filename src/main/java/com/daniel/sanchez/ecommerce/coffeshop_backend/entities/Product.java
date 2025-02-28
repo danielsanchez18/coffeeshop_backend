@@ -1,8 +1,10 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.entities;
 
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -16,6 +18,8 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_category", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    //@JsonBackReference
     private Category category;
 
     @Column(length = 100, nullable = false, unique = true)
@@ -33,5 +37,8 @@ public class Product {
 
     @Embedded
     private Audit audit = new Audit();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems;
 
 }
