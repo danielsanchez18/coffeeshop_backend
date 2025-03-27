@@ -32,6 +32,7 @@ public class User {
 
     private String profilePicture;
     private String googleId;
+    private String facebookId;
 
     @Column(nullable = false)
     private Boolean enabled;

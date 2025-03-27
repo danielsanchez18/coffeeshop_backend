@@ -8,8 +8,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,9 +26,11 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody Product product) {
+    public ResponseEntity<?> create(
+            @RequestPart("product") Product product,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
         try {
-            Product createdProduct = productService.create(product);
+            Product createdProduct = productService.create(product, image);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ResponseUtil.successResponse("Producto creado exitosamente", createdProduct));
         } catch (RuntimeException ex) {
@@ -37,7 +41,6 @@ public class ProductController {
                     .body(ResponseUtil.errorResponse("Error al crear el producto"));
         }
     }
-
     @GetMapping
     public ResponseEntity<?> findAll() {
         try {
@@ -80,9 +83,13 @@ public class ProductController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody Product product) {
+    public ResponseEntity<?> update(
+            @PathVariable UUID id,
+            @RequestPart("product") Product product,
+            @RequestPart(value = "image", required = false) MultipartFile image) {
+
         try {
-            Product updatedProduct = productService.update(id, product);
+            Product updatedProduct = productService.update(id, product, image);
             return ResponseEntity.ok(ResponseUtil.successResponse("Producto actualizado exitosamente", updatedProduct));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

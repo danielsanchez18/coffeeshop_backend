@@ -2,12 +2,15 @@ package com.daniel.sanchez.ecommerce.coffeshop_backend.servicesImpl;
 
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Product;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.repositories.ProductRepository;
+import com.daniel.sanchez.ecommerce.coffeshop_backend.services.FileStorageService;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,9 +21,18 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private FileStorageService fileStorageService;
+
     @Override
-    public Product create(Product product) {
+    public Product create(Product product, MultipartFile imageFile) {
         validateProductName(product.getName());
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = fileStorageService.storeImage(imageFile, "IMG_PRODUCTS");
+            product.setImageUrl(imageUrl);
+        }
+
         return productRepository.save(product);
     }
 
@@ -45,7 +57,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product update(UUID id, Product updatedProduct) {
+    public Product update(UUID id, Product updatedProduct, MultipartFile imageFile) {
         validateProductExists(id);
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
@@ -58,8 +70,19 @@ public class ProductServiceImpl implements ProductService {
         existingProduct.setName(updatedProduct.getName());
         existingProduct.setDescription(updatedProduct.getDescription());
         existingProduct.setPrice(updatedProduct.getPrice());
-        existingProduct.setImageUrl(updatedProduct.getImageUrl());
         existingProduct.setAvailable(updatedProduct.getAvailable());
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            // Eliminar la imagen anterior si existe
+            if (existingProduct.getImageUrl() != null) {
+                String oldFileName = existingProduct.getImageUrl().replace("IMG_PRODUCTS/", "");
+                fileStorageService.deleteImage(oldFileName, "IMG_PRODUCTS");
+            }
+
+            // Guardar la nueva imagen
+            String newImageUrl = fileStorageService.storeImage(imageFile, "IMG_PRODUCTS");
+            existingProduct.setImageUrl(newImageUrl);
+        }
 
         return productRepository.save(existingProduct);
     }

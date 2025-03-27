@@ -3,11 +3,14 @@ package com.daniel.sanchez.ecommerce.coffeshop_backend.servicesImpl;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Category;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.repositories.CategoryRepository;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.services.CategoryService;
+import com.daniel.sanchez.ecommerce.coffeshop_backend.services.FileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,9 +20,18 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private FileStorageService fileStorageService;
+
     @Override
-    public Category create(Category category) {
+    public Category create(Category category, MultipartFile image) throws IOException {
         validateCategoryName(category.getName());
+
+        if (image != null && !image.isEmpty()) {
+            String imagePath = fileStorageService.storeImage(image, "IMG_CATEGORIES");
+            category.setImageUrl(imagePath);
+        }
+
         return categoryRepository.save(category);
     }
 
@@ -59,11 +71,34 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category update(Long id, Category category) {
-        validateCategoryName(category.getName());
+    public Category update(Long id, Category category, MultipartFile image) throws IOException {
         validateCategoryExists(id);
         category.setId(id);
-        return categoryRepository.save(category);
+        validateCategoryName(category.getName());
+
+        Category existingCategory = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada"));
+
+        // Actualiza los campos de la categoría
+        existingCategory.setName(category.getName());
+        existingCategory.setDescription(category.getDescription());
+
+        if (image != null && !image.isEmpty()) {
+            //Eliminar la imagen anterior si existe
+            if (existingCategory.getImageUrl() != null) {
+                String oldFileName = existingCategory.getImageUrl().replace("IMG_CATEGORIES/", "");
+                fileStorageService.deleteImage(oldFileName, "IMG_CATEGORIES");
+            }
+
+            // Guardar la nueva imagen
+            String imagePath = fileStorageService.storeImage(image, "IMG_CATEGORIES");
+            System.out.println("imagePath:" + imagePath);
+            existingCategory.setImageUrl(imagePath);
+            System.out.println("existingCategory:" + existingCategory);
+        }
+
+        System.out.println("existingCategory:" + existingCategory);
+        return categoryRepository.save(existingCategory);
     }
 
     @Override

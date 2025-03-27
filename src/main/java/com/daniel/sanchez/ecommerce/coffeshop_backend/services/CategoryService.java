@@ -3,13 +3,15 @@ package com.daniel.sanchez.ecommerce.coffeshop_backend.services;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 public interface CategoryService {
 
-    Category create(Category category);
+    Category create(Category category, MultipartFile imageFile) throws IOException;
 
     List<Category> findAll();
 
@@ -28,7 +30,7 @@ public interface CategoryService {
 
     Long getTotal();
 
-    Category update(Long id, Category category);
+    Category update(Long id, Category category, MultipartFile image) throws IOException;
 
     void delete(Long id);
 
