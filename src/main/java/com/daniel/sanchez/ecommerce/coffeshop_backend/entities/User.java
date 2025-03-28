@@ -31,8 +31,8 @@ public class User {
     private String phone;
 
     private String profilePicture;
-    private String googleId;
-    private String facebookId;
+    private String provider;
+    private String providerId;
 
     @Column(nullable = false)
     private Boolean enabled;

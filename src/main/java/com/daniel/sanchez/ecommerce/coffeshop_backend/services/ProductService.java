@@ -1,5 +1,6 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.services;
 
+import com.daniel.sanchez.ecommerce.coffeshop_backend.dto.ProductDTO;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,22 +13,22 @@ import java.util.UUID;
 
 public interface ProductService {
 
-    Product create(Product product, MultipartFile imageFile);
+    ProductDTO create(ProductDTO productDTO, MultipartFile imageFile);
 
-    List<Product> findAll();
+    List<ProductDTO> findAll();
 
-    Page<Product> findAll(Pageable pageable);
+    Page<ProductDTO> findAll(Pageable pageable);
 
-    Optional<Product> findById(UUID id);
+    ProductDTO findById(UUID id);
 
     Long getTotal();
 
-    Product update(UUID id, Product updatedProduct, MultipartFile imageFile);
+    ProductDTO update(UUID id, ProductDTO updatedProductDTO, MultipartFile imageFile);
 
     void delete(UUID id);
 
-    // Filtrados
-    Page<Product> searchProducts(
+    // Productos filtrados
+    Page<ProductDTO> searchProducts(
             String name,
             Long idCategory,
             Boolean available,
@@ -37,12 +38,12 @@ public interface ProductService {
     );
 
     // Obtener los productos mas pedidos
-    Page<Product> findMostOrdered(Pageable pageable);
+    Page<ProductDTO> findMostOrdered(Pageable pageable);
 
     // Obtener los productos menos pedidos
-    Page<Product> findLessOrdered(Pageable pageable);
+    Page<ProductDTO> findLessOrdered(Pageable pageable);
 
     // Obtener el producto favorito de un usuario
-    Product findFavoriteProductByUser(UUID idUser);
+    ProductDTO findFavoriteProductByUser(UUID idUser);
 
 }

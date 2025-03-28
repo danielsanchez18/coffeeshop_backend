@@ -1,8 +1,10 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.controllers;
 
+import com.daniel.sanchez.ecommerce.coffeshop_backend.dto.ProductDTO;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Product;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.services.ProductService;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.utils.ResponseUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,12 +15,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/products")
 @CrossOrigin("*")
 public class ProductController {
 
@@ -27,10 +30,15 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<?> create(
-            @RequestPart("product") Product product,
-            @RequestPart(value = "image", required = false) MultipartFile image) {
+            @RequestPart("product") String productJson,
+            @RequestPart(value = "image", required = false) MultipartFile image
+    ) throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        ProductDTO product = objectMapper.readValue(productJson, ProductDTO.class);
+
         try {
-            Product createdProduct = productService.create(product, image);
+            ProductDTO createdProduct = productService.create(product, image);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ResponseUtil.successResponse("Producto creado exitosamente", createdProduct));
         } catch (RuntimeException ex) {
@@ -44,7 +52,7 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<?> findAll() {
         try {
-            List<Product> products = productService.findAll();
+            List<ProductDTO> products = productService.findAll();
             return ResponseEntity.ok(ResponseUtil.successResponse("Productos encontrados exitosamente", products));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse("Error al buscar los productos"));
@@ -54,7 +62,7 @@ public class ProductController {
     @GetMapping("/all")
     public ResponseEntity<?> findAllPage(@PageableDefault(size = 10, page = 0) Pageable pageable) {
         try {
-            Page<Product> products = productService.findAll(pageable);
+            Page<ProductDTO> products = productService.findAll(pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Productos encontrados exitosamente", products));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse("Error al buscar los productos"));
@@ -64,7 +72,7 @@ public class ProductController {
     @GetMapping("/id/{id}")
     public ResponseEntity<?> findById(@PathVariable UUID id) {
         try {
-            Optional<Product> product = productService.findById(id);
+            ProductDTO product = productService.findById(id);
             return ResponseEntity.ok(ResponseUtil.successResponse("Producto encontrado", product));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
@@ -85,11 +93,15 @@ public class ProductController {
     @PutMapping("/update/{id}")
     public ResponseEntity<?> update(
             @PathVariable UUID id,
-            @RequestPart("product") Product product,
-            @RequestPart(value = "image", required = false) MultipartFile image) {
+            @RequestPart("product") String productJson,
+            @RequestPart(value = "image", required = false) MultipartFile image
+    ) throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        ProductDTO product = objectMapper.readValue(productJson, ProductDTO.class);
 
         try {
-            Product updatedProduct = productService.update(id, product, image);
+            ProductDTO updatedProduct = productService.update(id, product, image);
             return ResponseEntity.ok(ResponseUtil.successResponse("Producto actualizado exitosamente", updatedProduct));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -124,7 +136,7 @@ public class ProductController {
             @PageableDefault(size = 10, page = 0) Pageable pageable
     ) {
         try {
-            Page<Product> products = productService.searchProducts(name, idCategory, available, minPrice, maxPrice, pageable);
+            Page<ProductDTO> products = productService.searchProducts(name, idCategory, available, minPrice, maxPrice, pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Productos encontrados exitosamente", products));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
@@ -134,7 +146,7 @@ public class ProductController {
     @GetMapping("/most-ordered")
     public ResponseEntity<?> findMostOrdered(@PageableDefault(size = 10, page = 0) Pageable pageable) {
         try {
-            Page<Product> products = productService.findMostOrdered(pageable);
+            Page<ProductDTO> products = productService.findMostOrdered(pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Productos encontrados exitosamente", products));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
@@ -144,7 +156,7 @@ public class ProductController {
     @GetMapping("/less-ordered")
     public ResponseEntity<?> findLessOrdered(@PageableDefault(size = 10, page = 0) Pageable pageable) {
         try {
-            Page<Product> products = productService.findLessOrdered(pageable);
+            Page<ProductDTO> products = productService.findLessOrdered(pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Productos encontrados exitosamente", products));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
@@ -154,7 +166,7 @@ public class ProductController {
     @GetMapping("/favorite/{idUser}")
     public ResponseEntity<?> findFavoriteProductByUser(@PathVariable UUID idUser) {
         try {
-            Product product = productService.findFavoriteProductByUser(idUser);
+            ProductDTO product = productService.findFavoriteProductByUser(idUser);
             return ResponseEntity.ok(ResponseUtil.successResponse("Producto encontrado", product));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
