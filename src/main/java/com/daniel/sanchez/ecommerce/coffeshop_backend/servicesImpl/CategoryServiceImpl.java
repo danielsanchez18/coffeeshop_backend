@@ -1,6 +1,8 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.servicesImpl;
 
+import com.daniel.sanchez.ecommerce.coffeshop_backend.dto.CategoryDTO;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Category;
+import com.daniel.sanchez.ecommerce.coffeshop_backend.mappers.CategoryMapper;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.repositories.CategoryRepository;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.services.CategoryService;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.services.FileStorageService;
@@ -23,46 +25,61 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @Autowired
+    private CategoryMapper categoryMapper;
+
     @Override
-    public Category create(Category category, MultipartFile image) throws IOException {
-        validateCategoryName(category.getName());
+    public CategoryDTO create(CategoryDTO categoryDTO, MultipartFile image) throws IOException {
+        validateCategoryName(categoryDTO.getName());
+
+        Category category = categoryMapper.toEntity(categoryDTO);
 
         if (image != null && !image.isEmpty()) {
             String imagePath = fileStorageService.storeImage(image, "IMG_CATEGORIES");
-            category.setImageUrl(imagePath);
+            categoryDTO.setImageUrl(imagePath);
         }
 
-        return categoryRepository.save(category);
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toDTO(savedCategory);
     }
 
     @Override
-    public List<Category> findAll() {
-        return categoryRepository.findAll();
+    public List<CategoryDTO> findAll() {
+        return categoryRepository.findAll()
+                .stream()
+                .map(categoryMapper::toDTO)
+                .toList();
     }
 
     @Override
-    public Page<Category> findAll(Pageable pageable) {
-        return categoryRepository.findAll(pageable);
+    public Page<CategoryDTO> findAll(Pageable pageable) {
+        return categoryRepository.findAll(pageable)
+                .map(categoryMapper::toDTO);
     }
 
     @Override
-    public Optional<Category> findById(Long id) {
-        return categoryRepository.findById(id);
+    public CategoryDTO findById(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada"));
+        return categoryMapper.toDTO(category);
     }
 
     @Override
-    public Page<Category> findByName(String name, Pageable pageable) {
-        return categoryRepository.findByNameContainingIgnoreCase(name, pageable);
+    public Page<CategoryDTO> findByName(String name, Pageable pageable) {
+        return categoryRepository.findByNameContainingIgnoreCase(name, pageable)
+                .map(categoryMapper::toDTO);
     }
 
     @Override
-    public Page<Category> findMostPopular(Pageable pageable) {
-        return categoryRepository.findMostPopular(pageable);
+    public Page<CategoryDTO> findMostPopular(Pageable pageable) {
+        return categoryRepository.findMostPopular(pageable)
+                .map(categoryMapper::toDTO);
     }
 
     @Override
-    public Page<Category> findLessPopular(Pageable pageable) {
-        return categoryRepository.findUnPopular(pageable);
+    public Page<CategoryDTO> findLessPopular(Pageable pageable) {
+        return categoryRepository.findUnPopular(pageable)
+                .map(categoryMapper::toDTO);
     }
 
     @Override
@@ -71,17 +88,17 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category update(Long id, Category category, MultipartFile image) throws IOException {
+    public CategoryDTO update(Long id, CategoryDTO categoryDTO, MultipartFile image) throws IOException {
         validateCategoryExists(id);
-        category.setId(id);
-        validateCategoryName(category.getName());
+        categoryDTO.setId(id);
+        validateCategoryName(categoryDTO.getName());
 
         Category existingCategory = categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada"));
 
         // Actualiza los campos de la categoría
-        existingCategory.setName(category.getName());
-        existingCategory.setDescription(category.getDescription());
+        existingCategory.setName(categoryDTO.getName());
+        existingCategory.setDescription(categoryDTO.getDescription());
 
         if (image != null && !image.isEmpty()) {
             //Eliminar la imagen anterior si existe
@@ -92,13 +109,11 @@ public class CategoryServiceImpl implements CategoryService {
 
             // Guardar la nueva imagen
             String imagePath = fileStorageService.storeImage(image, "IMG_CATEGORIES");
-            System.out.println("imagePath:" + imagePath);
             existingCategory.setImageUrl(imagePath);
-            System.out.println("existingCategory:" + existingCategory);
         }
 
-        System.out.println("existingCategory:" + existingCategory);
-        return categoryRepository.save(existingCategory);
+        Category category = categoryRepository.save(existingCategory);
+        return categoryMapper.toDTO(category);
     }
 
     @Override

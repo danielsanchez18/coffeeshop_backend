@@ -1,5 +1,6 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.services;
 
+import com.daniel.sanchez.ecommerce.coffeshop_backend.dto.CategoryDTO;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Category;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,26 +12,26 @@ import java.util.Optional;
 
 public interface CategoryService {
 
-    Category create(Category category, MultipartFile imageFile) throws IOException;
+    CategoryDTO create(CategoryDTO categoryDTO, MultipartFile imageFile) throws IOException;
 
-    List<Category> findAll();
+    List<CategoryDTO> findAll();
 
-    Page<Category> findAll(Pageable pageable);
+    Page<CategoryDTO> findAll(Pageable pageable);
 
-    Optional<Category> findById(Long id);
+    CategoryDTO findById(Long id);
 
     // Buscar categorías por caracteres
-    Page<Category> findByName(String name, Pageable pageable);
+    Page<CategoryDTO> findByName(String name, Pageable pageable);
 
     // Obtener las categorías mas populares (Mas productos vendidos)
-    Page<Category> findMostPopular(Pageable pageable);
+    Page<CategoryDTO> findMostPopular(Pageable pageable);
 
     // Obtener las categorías menos populares (Menos productos vendidos)
-    Page<Category> findLessPopular(Pageable pageable);
+    Page<CategoryDTO> findLessPopular(Pageable pageable);
 
     Long getTotal();
 
-    Category update(Long id, Category category, MultipartFile image) throws IOException;
+    CategoryDTO update(Long id, CategoryDTO updatedCategoryDTO, MultipartFile image) throws IOException;
 
     void delete(Long id);
 

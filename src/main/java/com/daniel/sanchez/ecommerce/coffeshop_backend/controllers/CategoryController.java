@@ -1,5 +1,6 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.controllers;
 
+import com.daniel.sanchez.ecommerce.coffeshop_backend.dto.CategoryDTO;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Category;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.services.CategoryService;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.utils.ResponseUtil;
@@ -32,10 +33,10 @@ public class CategoryController {
     ) throws IOException {
 
         ObjectMapper om = new ObjectMapper();
-        Category category = om.readValue(categoryJson, Category.class);
+        CategoryDTO category = om.readValue(categoryJson, CategoryDTO.class);
 
         try {
-            Category createdCategory = categoryService.create(category, image);
+            CategoryDTO createdCategory = categoryService.create(category, image);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ResponseUtil.successResponse("Categoría creada exitosamente", createdCategory));
         } catch (RuntimeException ex) {
@@ -50,7 +51,7 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<?> findAll() {
         try {
-            List<Category> categories = categoryService.findAll();
+            List<CategoryDTO> categories = categoryService.findAll();
             return ResponseEntity.ok(ResponseUtil.successResponse("Categorías encontradas exitosamente", categories));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse("Error al buscar las categorías"));
@@ -60,7 +61,7 @@ public class CategoryController {
     @GetMapping("/all")
     public ResponseEntity<?> findAllPage(@PageableDefault(size = 10, page = 0) Pageable pageable) {
         try {
-            Page<Category> categories = categoryService.findAll(pageable);
+            Page<CategoryDTO> categories = categoryService.findAll(pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Categorías encontradas exitosamente", categories));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse("Error al buscar las categorías"));
@@ -70,7 +71,7 @@ public class CategoryController {
     @GetMapping("/id/{id}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
         try {
-            Optional<Category> category = categoryService.findById(id);
+            CategoryDTO category = categoryService.findById(id);
             return ResponseEntity.ok(ResponseUtil.successResponse("Categoría encontrada", category));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
@@ -80,7 +81,7 @@ public class CategoryController {
     @GetMapping("/name/{name}")
     public ResponseEntity<?> findByName(@PathVariable String name, @PageableDefault(size = 10, page = 0) Pageable pageable) {
         try {
-            Page<Category> categories = categoryService.findByName(name, pageable);
+            Page<CategoryDTO> categories = categoryService.findByName(name, pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Categorías encontradas exitosamente" , categories));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
@@ -90,7 +91,7 @@ public class CategoryController {
     @GetMapping("/most-popular")
     public ResponseEntity<?> findMostPopular(@PageableDefault(size = 10, page = 0) Pageable pageable) {
         try {
-            Page<Category> categories = categoryService.findMostPopular(pageable);
+            Page<CategoryDTO> categories = categoryService.findMostPopular(pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Categorías encontradas exitosamente" , categories));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
@@ -100,7 +101,7 @@ public class CategoryController {
     @GetMapping("/less-popular")
     public ResponseEntity<?> findLessPopular(@PageableDefault(size = 10, page = 0) Pageable pageable) {
         try {
-            Page<Category> categories = categoryService.findLessPopular(pageable);
+            Page<CategoryDTO> categories = categoryService.findLessPopular(pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Categorías encontradas exitosamente" , categories));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
@@ -126,10 +127,10 @@ public class CategoryController {
     ) throws IOException {
 
         ObjectMapper om = new ObjectMapper();
-        Category category = om.readValue(categoryJson, Category.class);
+        CategoryDTO category = om.readValue(categoryJson, CategoryDTO.class);
 
         try {
-            Category updatedCategory = categoryService.update(id, category, image);
+            CategoryDTO updatedCategory = categoryService.update(id, category, image);
             return ResponseEntity.ok(ResponseUtil.successResponse("Categoría actualizada exitosamente", updatedCategory));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
