@@ -15,11 +15,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 100, nullable = false)
     private String name;
-
-    @Column(length = 50, nullable = false)
-    private String lastname;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -31,7 +28,10 @@ public class User {
     private String phone;
 
     private String profilePicture;
-    private String provider;
+
+    @Column(length = 10, nullable = false)
+    private String provider; // LOCAL, GOOGLE, FACEBOOK
+
     private String providerId;
 
     @Column(nullable = false)
