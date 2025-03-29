@@ -3,6 +3,7 @@ package com.daniel.sanchez.ecommerce.coffeshop_backend.services;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.dto.UserDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +20,7 @@ public interface UserService {
 
     Long getTotal();
 
-    UserDTO update(UUID id, UserDTO updatedUserDTO, String password);
+    UserDTO update(UUID id, UserDTO updatedUserDTO, MultipartFile imageFile);
 
     void delete(UUID id);
 
@@ -43,6 +44,6 @@ public interface UserService {
 
     UserDTO updatePassword(UUID id, String password);
 
-    UserDTO updateStatus(UUID id, Boolean status);
+    UserDTO changeStatus(UUID id);
 
 }

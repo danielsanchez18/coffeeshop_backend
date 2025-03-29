@@ -3,17 +3,20 @@ package com.daniel.sanchez.ecommerce.coffeshop_backend.mappers;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.dto.UserDTO;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Role;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.User;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class UserMappers {
+@Component
+public class UserMapper {
 
-    public static UserDTO toDTO(User user) {
+    public UserDTO toDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
+        dto.setPassword(user.getPassword());
         dto.setPhone(user.getPhone());
         dto.setProfilePicture(user.getProfilePicture());
         dto.setProvider(user.getProvider());
@@ -30,11 +33,12 @@ public class UserMappers {
         return dto;
     }
 
-    public static User toEntity(UserDTO dto) {
+    public User toEntity(UserDTO dto) {
         User user = new User();
         user.setId(dto.getId());
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
+        user.setPassword(dto.getPassword());
         user.setPhone(dto.getPhone());
         user.setProfilePicture(dto.getProfilePicture());
         user.setEnabled(dto.getEnabled());
