@@ -11,6 +11,7 @@ import com.daniel.sanchez.ecommerce.coffeshop_backend.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +32,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     @Override
     public UserDTO create(UserDTO userDTO) {
 
@@ -49,6 +53,7 @@ public class UserServiceImpl implements UserService {
         // 3. Asignar el rol al usuario
         user.setRoles(new HashSet<>(Collections.singleton(clienteRole)));
 
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setEnabled(true);
         user.setProvider("LOCAL");
 
@@ -179,8 +184,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("Usuario no encontrado"));
 
-        // user.setPassword(this.passwordEncoder.encode(password));
-        user.setPassword(password);
+        user.setPassword(this.passwordEncoder.encode(password));
 
         User updatedUser = userRepository.save(user);
         return userMapper.toDTO(updatedUser);
