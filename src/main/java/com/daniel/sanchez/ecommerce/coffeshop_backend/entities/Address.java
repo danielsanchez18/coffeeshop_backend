@@ -16,7 +16,9 @@ public class Address {
     @JoinColumn(name = "id_user", nullable = false)
     private User user;
 
+    @Column(nullable = false)
     private String street;
+
     private String reference;
 
     @Column(nullable = false)
