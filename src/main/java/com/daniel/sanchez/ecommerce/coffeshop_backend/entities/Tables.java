@@ -15,8 +15,8 @@ public class Tables {
     @Column(nullable = false)
     private Integer tableNumber;
 
-    @Column(nullable = false)
-    private String status; // e.g., "AVAILABLE", "OCCUPIED"
+    @Column(length = 10, nullable = false)
+    private String status; // e.g., "DISPONIBLE", "OCUPADA", "RESERVADA", "CERRADA"
 
     @Embedded
     private Audit audit = new Audit();
