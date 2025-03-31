@@ -21,7 +21,7 @@ public class Promotion {
     private String description;
 
     @Column(length = 50, nullable = false)
-    private String discountType; // e.g., "FIXED", "PERCENTAGE"
+    private String discountType; // e.g., "PORCENTAJE", "VALOR"
 
     @Column(nullable = false)
     private Double discountValue;

@@ -1,6 +1,7 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.dto;
 
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Audit;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.UUID;
@@ -15,6 +16,10 @@ public class ProductDTO {
     private Double price;
     private String imageUrl;
     private Boolean available;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private boolean onOffer;
+
     private Audit audit;
 
 }
