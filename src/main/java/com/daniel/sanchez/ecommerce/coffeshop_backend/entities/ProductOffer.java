@@ -31,4 +31,14 @@ public class ProductOffer {
     @Embedded
     private Audit audit = new Audit();
 
+    public boolean isActive() {
+        LocalDateTime now = LocalDateTime.now();
+        return !now.isBefore(startDate) && !now.isAfter(endDate);
+    }
+
+    // Método para finalizar la oferta
+    public void endNow() {
+        this.endDate = LocalDateTime.now(); // Fuerza el fin inmediato
+    }
+
 }

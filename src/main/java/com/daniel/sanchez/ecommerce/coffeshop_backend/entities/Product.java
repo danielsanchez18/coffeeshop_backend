@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,7 +20,6 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_category", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    //@JsonBackReference
     private Category category;
 
     @Column(length = 100, nullable = false, unique = true)
@@ -40,5 +40,8 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductOffer> productOffers = new ArrayList<>();
 
 }
