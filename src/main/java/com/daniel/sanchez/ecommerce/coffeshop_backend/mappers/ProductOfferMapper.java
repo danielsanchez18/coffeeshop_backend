@@ -28,6 +28,7 @@ public class ProductOfferMapper {
         // Estado calculado (usa isActive() de la entidad)
         dto.setActive(offer.isActive());
 
+        dto.setAudit(offer.getAudit());
         return dto;
     }
 

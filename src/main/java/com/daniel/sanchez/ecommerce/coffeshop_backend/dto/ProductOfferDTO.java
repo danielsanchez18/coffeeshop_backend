@@ -1,5 +1,6 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.dto;
 
+import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Audit;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -27,4 +28,5 @@ public class ProductOfferDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private boolean active;
 
+    private Audit audit;
 }

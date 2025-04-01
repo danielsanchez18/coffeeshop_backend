@@ -27,7 +27,7 @@ public class Promotion {
     private Double discountValue;
 
     @Column(nullable = false)
-    private Integer minQuantity;
+    private Double priceFinal;
 
     @Column(nullable = false)
     private LocalDateTime startDate;
@@ -37,5 +37,14 @@ public class Promotion {
 
     @Embedded
     private Audit audit = new Audit();
+
+    public boolean isActive() {
+        LocalDateTime now = LocalDateTime.now();
+        return !now.isBefore(startDate) && !now.isAfter(endDate);
+    }
+
+    public void endNow() {
+        this.endDate = LocalDateTime.now();
+    }
 
 }

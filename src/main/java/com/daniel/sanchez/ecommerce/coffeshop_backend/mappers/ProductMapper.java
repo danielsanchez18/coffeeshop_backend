@@ -1,19 +1,21 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.mappers;
 
 import com.daniel.sanchez.ecommerce.coffeshop_backend.dto.ProductDTO;
-import com.daniel.sanchez.ecommerce.coffeshop_backend.dto.ProductOfferDTO;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Product;
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.ProductOffer;
+import com.daniel.sanchez.ecommerce.coffeshop_backend.repositories.PromotionProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 
 @Component
 public class ProductMapper {
 
     @Autowired
     private ProductOfferMapper productOfferMapper;
+
+    @Autowired
+    private PromotionProductRepository promotionProductRepository;
 
     public ProductDTO toDTO(Product product) {
         ProductDTO dto = new ProductDTO();
@@ -26,11 +28,16 @@ public class ProductMapper {
         dto.setAvailable(product.getAvailable());
         dto.setAudit(product.getAudit());
 
-        // Calcula si tiene al menos una oferta activa (no pausada y dentro de fechas)
+        // Calcula si tiene al menos una oferta activa
         dto.setOnOffer(
                 product.getProductOffers() != null &&
                 product.getProductOffers().stream()
                         .anyMatch(ProductOffer::isActive) // Usa el método isActive() de la entidad
+        );
+
+        // Calcula si tiene al menos una promoción activa
+        dto.setOnPromotion(
+                promotionProductRepository.existsActivePromotionForProduct(product.getId())
         );
 
         return dto;

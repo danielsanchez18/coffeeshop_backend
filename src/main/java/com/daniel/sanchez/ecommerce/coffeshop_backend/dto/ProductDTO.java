@@ -20,6 +20,9 @@ public class ProductDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private boolean onOffer;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private boolean onPromotion;
+
     private Audit audit;
 
 }
