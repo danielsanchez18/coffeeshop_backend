@@ -23,10 +23,13 @@ public class ProductOfferDTO {
     private Double discountPrice;
     private String startDate;
     private String endDate;
+    private Integer usesMax;
 
-    // Output: Estado calculado (no pausada + dentro de fechas)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private boolean active;
+    private Integer usesQuantity;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String state;
 
     private Audit audit;
 }

@@ -28,17 +28,58 @@ public class ProductOffer {
     @Column(nullable = false)
     private LocalDateTime endDate;
 
+    @Column(nullable = false)
+    private Integer usesMax; // 0 para ilimitado
+
+    @Column(nullable = false)
+    private Integer usesQuantity = 0;
+
+    @Column(nullable = false)
+    private boolean manualCancel = false; // Indica si fue cancelada manualmente
+
     @Embedded
     private Audit audit = new Audit();
 
     public boolean isActive() {
-        LocalDateTime now = LocalDateTime.now();
-        return !now.isBefore(startDate) && !now.isAfter(endDate);
+        return calculateStatus().equals("ACTIVA");
     }
 
-    // Método para finalizar la oferta
-    public void endNow() {
-        this.endDate = LocalDateTime.now(); // Fuerza el fin inmediato
+    // Método para cancelar manualmente
+    public void cancel() {
+        this.manualCancel = true;
+        this.endDate = LocalDateTime.now(); // Finaliza inmediatamente
+    }
+
+    // Nuevo método para incrementar usos (solo se llama al aplicar la oferta en un pedido)
+    public void incrementUsage() {
+        if (usesMax > 0 && usesQuantity >= usesMax) {
+            throw new IllegalStateException("La oferta ya ha alcanzado su límite de usos");
+        }
+        usesQuantity++;
+
+        // Si se agotó, finaliza automáticamente
+        if (usesQuantity.equals(usesMax)) {
+            this.endDate = LocalDateTime.now();
+        }
+    }
+
+    // Método para calcular el estado (no se persiste, se usa en el DTO)
+    public String calculateStatus() {
+        LocalDateTime now = LocalDateTime.now();
+
+        if (manualCancel) {
+            return "CANCELADA"; // Prioridad máxima: override cualquier otro estado
+        }
+        if (usesMax > 0 && usesQuantity >= usesMax) {
+            return "AGOTADA"; // Segundo en prioridad
+        }
+        if (now.isBefore(startDate)) {
+            return "PROXIMA";
+        }
+        if (!now.isAfter(endDate)) { // Si está en rango o se agotó (endDate modificado)
+            return "ACTIVA";
+        }
+        return "TERMINADA"; // Si pasó la fecha original de fin
     }
 
 }

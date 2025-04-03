@@ -92,7 +92,7 @@ public class ProductOfferServiceImpl implements ProductOfferService {
                 .orElseThrow(() -> new IllegalArgumentException("Oferta no encontrada"));
 
         validator.validateCanEndOffer(offer);
-        offer.endNow();
+        offer.cancel();
 
         return productOfferMapper.toDTO(productOfferRepository.save(offer));
     }
