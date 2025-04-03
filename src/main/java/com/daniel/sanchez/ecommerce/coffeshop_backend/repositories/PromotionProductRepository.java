@@ -11,21 +11,16 @@ import java.util.UUID;
 
 public interface PromotionProductRepository extends JpaRepository<PromotionProduct, Long> {
 
-    // Consulta para saber si un producto tiene al menos una promoción activa
+    // Verifica si un producto tiene promociones activas ahora
     @Query("SELECT CASE WHEN COUNT(pp) > 0 THEN true ELSE false END " +
             "FROM PromotionProduct pp " +
             "JOIN pp.promotion p " +
             "WHERE pp.product.id = :productId " +
             "AND p.startDate <= CURRENT_TIMESTAMP " +
             "AND p.endDate >= CURRENT_TIMESTAMP")
-    boolean existsActivePromotionForProduct(UUID productId);
+    boolean existsActivePromotionForProduct(@Param("productId") UUID productId);
 
-    List<PromotionProduct> findByPromotionId(UUID promotionId);
-
-    List<PromotionProduct> findByProductId(UUID productId);
-
-    void deleteByPromotionId(UUID promotionId);
-
+    // Verifica solapamiento de fechas con promociones
     @Query("SELECT CASE WHEN COUNT(pp) > 0 THEN true ELSE false END " +
             "FROM PromotionProduct pp " +
             "JOIN pp.promotion p " +
@@ -39,6 +34,13 @@ public interface PromotionProductRepository extends JpaRepository<PromotionProdu
             @Param("end") LocalDateTime end
     );
 
+    List<PromotionProduct> findByPromotionId(UUID promotionId);
+
+    List<PromotionProduct> findByProductId(UUID productId);
+
+    void deleteByPromotionId(UUID promotionId);
+
+    // Opcional: Para obtener las promociones solapadas (usado en mensajes de error)
     @Query("SELECT pp FROM PromotionProduct pp " +
             "JOIN pp.promotion p " +
             "WHERE pp.product.id = :productId " +
@@ -50,5 +52,4 @@ public interface PromotionProductRepository extends JpaRepository<PromotionProdu
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
-
 }

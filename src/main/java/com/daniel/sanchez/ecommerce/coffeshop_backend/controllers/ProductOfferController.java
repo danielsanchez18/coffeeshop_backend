@@ -118,4 +118,33 @@ public class ProductOfferController {
                     .body(ResponseUtil.errorResponse("Error al cambiar el estado de la oferta de producto"));
         }
     }
+
+    @PutMapping("/extend/{id}")
+    public ResponseEntity<?> extendOffer(@PathVariable UUID id, @RequestBody ProductOfferDTO offerDTO) {
+        try {
+            ProductOfferDTO extendedOffer = productOfferService.extendOffer(id, offerDTO);
+            return ResponseEntity.ok(ResponseUtil.successResponse("Oferta de producto extendida exitosamente", extendedOffer));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseUtil.errorResponse(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseUtil.errorResponse("Error al extender la oferta de producto"));
+        }
+    }
+
+    @PutMapping("/increment-usage/{offerId}")
+    public ResponseEntity<?> incrementUsage(@PathVariable UUID offerId) {
+        try {
+            ProductOfferDTO updatedOffer = productOfferService.incrementUsage(offerId);
+            return ResponseEntity.ok(ResponseUtil.successResponse("Uso de la oferta de producto incrementado exitosamente", updatedOffer));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseUtil.errorResponse(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseUtil.errorResponse("Error al incrementar el uso de la oferta de producto"));
+        }
+    }
+
 }

@@ -25,4 +25,8 @@ public interface ProductOfferService {
 
     ProductOfferDTO changeState(UUID id);
 
+    ProductOfferDTO extendOffer(UUID id, ProductOfferDTO offerDTO);
+
+    ProductOfferDTO incrementUsage(UUID offerId);
+
 }

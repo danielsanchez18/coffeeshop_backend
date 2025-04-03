@@ -32,24 +32,27 @@ public class ProductOfferValidator {
         LocalDateTime startDate = LocalDateTime.parse(offerDTO.getStartDate());
         LocalDateTime endDate = LocalDateTime.parse(offerDTO.getEndDate());
 
-        validateOfferDates(offerDTO); // Valida las fechas de la oferta
+        validateOfferDates(startDate, endDate, false); // Valida las fechas de la oferta
         validateNoActiveOffersOrPromotions(product, startDate, endDate); // Valida que no tenga ofertas activas ni promociones activas
         validateDiscountPrice(product.getPrice(), offerDTO.getDiscountPrice()); // Valida el precio de la oferta
     }
 
     // Valida la actualización de una oferta de producto
-    public void validateUpdateOffer(UUID offerId, ProductOfferDTO offerDTO) {
-        ProductOffer existingOffer = getOfferOrThrow(offerId); // Obtiene la oferta existente
-        Product product = existingOffer.getProduct(); // Obtiene el producto de la oferta
-
-        LocalDateTime newStart = LocalDateTime.parse(offerDTO.getStartDate());
-        LocalDateTime newEnd = LocalDateTime.parse(offerDTO.getEndDate());
-
-        validateOfferDates(offerDTO); // Valida las fechas de la oferta
-        validateDiscountPrice(product.getPrice(), offerDTO.getDiscountPrice()); // Valida el precio de la oferta
+    public void validateUpdateOffer(ProductOffer existingOffer, ProductOfferDTO offerDTO) {
+        validateOfferStateForUpdate(existingOffer); // Solo PROXIMA
+        validateOfferDates(
+                LocalDateTime.parse(offerDTO.getStartDate()),
+                LocalDateTime.parse(offerDTO.getEndDate()),
+                false
+        );
+        validateDiscountPrice(existingOffer.getProduct().getPrice(), offerDTO.getDiscountPrice());
 
         if (haveDatesChanged(existingOffer, offerDTO)) {
-            validateNoOverlappingPromotions(product, newStart, newEnd); // Valida que no haya promociones activas
+            validateNoOverlappingPromotions(
+                    existingOffer.getProduct(),
+                    LocalDateTime.parse(offerDTO.getStartDate()),
+                    LocalDateTime.parse(offerDTO.getEndDate())
+            );
         }
     }
 
@@ -65,7 +68,85 @@ public class ProductOfferValidator {
         }
     }
 
-    // --- Métodos privados de validación ---
+    // Valida que se pueda extender una oferta
+    public void validateExtendOffer(ProductOffer existingOffer, ProductOfferDTO offerDTO) {
+        LocalDateTime newEndDate = LocalDateTime.parse(offerDTO.getEndDate());
+        LocalDateTime existingEndDate = existingOffer.getEndDate();
+        String status = existingOffer.calculateStatus();
+        UUID productId = existingOffer.getProduct().getId();
+
+        // 1. Validar fecha de extensión posterior
+        if (!newEndDate.isAfter(existingEndDate)) {
+            throw new IllegalArgumentException(
+                    String.format("La nueva fecha de fin (%s) debe ser posterior a la fecha actual (%s)",
+                            newEndDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                            existingEndDate.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+            );
+        }
+
+        // 2. Validar estado
+        if (status.equals("CANCELADA")) {
+            throw new IllegalStateException("No se puede extender una oferta cancelada");
+        }
+        if (LocalDateTime.now().isAfter(existingEndDate.plusHours(24))) {
+            throw new IllegalStateException("No se puede extender pasadas 24 horas de la fecha de fin");
+        }
+
+        // 3. Validar por estado
+        switch (status) {
+            case "ACTIVA":
+            case "TERMINADA":
+                validateOfferDates(existingOffer.getStartDate(), newEndDate, true);
+                break;
+            case "AGOTADA":
+                validateOfferDates(existingOffer.getStartDate(), newEndDate, true);
+                if (offerDTO.getUsesMax() < existingOffer.getUsesQuantity()) {
+                    throw new IllegalArgumentException(
+                            String.format("El nuevo límite de usos (%d) no puede ser menor al uso actual (%d)",
+                                    offerDTO.getUsesMax(), existingOffer.getUsesQuantity())
+                    );
+                }
+                break;
+            default:
+                throw new IllegalStateException("Estado no válido para extensión: " + status);
+        }
+
+        // 4. Validar solapamientos con ofertas/promociones (usando existsByProductAndDateRange)
+        if (productOfferRepository.existsByProductAndDateRange(productId, existingEndDate, newEndDate)) {
+            throw new IllegalStateException("No se puede extender: Hay ofertas programadas después de la fecha original");
+        }
+        if (promotionProductRepository.existsByProductAndDateRange(productId, existingEndDate, newEndDate)) {
+            throw new IllegalStateException("No se puede extender: Hay promociones programadas después de la fecha original");
+        }
+    }
+
+
+    // Valida que se pueda incrementar el uso de una oferta
+    public void validateCanIncrementUsage(ProductOffer offer) {
+        String status = offer.calculateStatus();
+
+        // Solo permitir incrementar en ofertas ACTIVAS o PRÓXIMAS (si startsDate <= now)
+        if (!status.equals("ACTIVA") &&
+                !(status.equals("PROXIMA") && LocalDateTime.now().isAfter(offer.getStartDate()))) {
+            throw new IllegalStateException(
+                    String.format("No se puede incrementar usos en una oferta con estado: %s", status)
+            );
+        }
+
+        // Validar si ya está agotada (usesMax > 0 && usesQuantity >= usesMax)
+        if (offer.getUsesMax() > 0 && offer.getUsesQuantity() >= offer.getUsesMax()) {
+            throw new IllegalStateException("La oferta ya ha alcanzado su límite de usos");
+        }
+    }
+
+    // === Métodos Privados de Validacion y Soporte ===
+
+    // Valida que la oferta esté en estado PROXIMA para poder actualizarla
+    private void validateOfferStateForUpdate(ProductOffer offer) {
+        if (!offer.calculateStatus().equals("PROXIMA")) {
+            throw new IllegalStateException("Solo se pueden actualizar ofertas en estado PROXIMA");
+        }
+    }
 
     // Obtiene un producto o lanza una excepción si no existe
     private Product getProductOrThrow(UUID productId) {
@@ -81,22 +162,13 @@ public class ProductOfferValidator {
         return product;
     }
 
-    // Obtiene una oferta o lanza una excepción si no existe
-    private ProductOffer getOfferOrThrow(UUID offerId) {
-        return productOfferRepository.findById(offerId)
-                .orElseThrow(() -> new IllegalArgumentException("Oferta no encontrada"));
-    }
-
     // Valida que las fechas de la oferta sean correctas
-    private void validateOfferDates(ProductOfferDTO offerDTO) {
-        LocalDateTime startDate = LocalDateTime.parse(offerDTO.getStartDate());
-        LocalDateTime endDate = LocalDateTime.parse(offerDTO.getEndDate());
+    private void validateOfferDates(LocalDateTime startDate, LocalDateTime endDate, boolean isExtension) {
         LocalDateTime now = LocalDateTime.now();
 
-        if (startDate.isBefore(now)) {
+        if (!isExtension && startDate.isBefore(now)) {
             throw new IllegalArgumentException("La fecha de inicio no puede ser en el pasado");
         }
-
         if (endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("La fecha de fin debe ser posterior a la de inicio");
         }
@@ -104,20 +176,17 @@ public class ProductOfferValidator {
 
     // Valida que no haya ofertas activas ni promociones activas
     private void validateNoActiveOffersOrPromotions(Product product, LocalDateTime start, LocalDateTime end) {
-        validateNoActiveOffers(product);
+        validateNoOverlappingOffers(product, start, end);
         validateNoOverlappingPromotions(product, start, end);
     }
 
-    // Valida que el producto no tenga ofertas activas
-    private void validateNoActiveOffers(Product product) {
-        productOfferRepository.findByProductAndEndDateAfter(product, LocalDateTime.now())
+    private void validateNoOverlappingOffers(Product product, LocalDateTime start, LocalDateTime end) {
+        productOfferRepository.findByProductAndOverlappingDates(product.getId(), start, end)
                 .stream()
-                .filter(offer -> offer.isActive() || offer.getStartDate().isAfter(LocalDateTime.now()))
                 .findFirst()
                 .ifPresent(offer -> {
                     throw new IllegalArgumentException(
-                            String.format("El producto ya tiene una oferta activa del %s al %s",
-                                    offer.isActive() ? "activa" : "programada",
+                            String.format("El producto ya tiene una oferta programada del %s al %s",
                                     formatDate(offer.getStartDate()),
                                     formatDate(offer.getEndDate()))
                     );

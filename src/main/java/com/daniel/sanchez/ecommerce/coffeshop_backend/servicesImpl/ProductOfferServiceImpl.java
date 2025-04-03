@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -20,80 +21,118 @@ import java.util.stream.Collectors;
 public class ProductOfferServiceImpl implements ProductOfferService {
 
     @Autowired
-    private ProductOfferRepository productOfferRepository;
+    private ProductOfferRepository repository;
 
     @Autowired
     private ProductOfferValidator validator;
 
     @Autowired
-    private ProductOfferMapper productOfferMapper;
+    private ProductOfferMapper mapper;
 
     @Override
     @Transactional
     public ProductOfferDTO create(ProductOfferDTO offerDTO) {
         validator.validateCreateOffer(offerDTO);
 
-        ProductOffer offer = productOfferMapper.toEntity(offerDTO);
-        ProductOffer savedOffer = productOfferRepository.save(offer);
+        ProductOffer offer = mapper.toEntity(offerDTO);
+        ProductOffer savedOffer = repository.save(offer);
 
-        return productOfferMapper.toDTO(savedOffer);
+        return mapper.toDTO(savedOffer);
     }
 
     @Override
     @Transactional
     public ProductOfferDTO update(UUID id, ProductOfferDTO offerDTO) {
-        validator.validateUpdateOffer(id, offerDTO);
-
-        ProductOffer existingOffer = productOfferRepository.findById(id)
+        ProductOffer existingOffer = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Oferta no encontrada"));
 
-        productOfferMapper.updateFromDTO(offerDTO, existingOffer);
-        ProductOffer updatedOffer = productOfferRepository.save(existingOffer);
+        validator.validateUpdateOffer(existingOffer, offerDTO);
 
-        return productOfferMapper.toDTO(updatedOffer);
+        // Solo permite actualizar campos específicos
+        mapper.updateFromDTO(offerDTO, existingOffer);
+        return mapper.toDTO(repository.save(existingOffer));
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
-        productOfferRepository.deleteById(id);
+        repository.deleteById(id);
     }
 
     @Override
     public ProductOfferDTO findById(UUID id) {
-        return productOfferRepository.findById(id)
-                .map(productOfferMapper::toDTO)
+        return repository.findById(id)
+                .map(mapper::toDTO)
                 .orElseThrow(() -> new IllegalArgumentException("Oferta no encontrada"));
     }
 
     @Override
     public List<ProductOfferDTO> findAll() {
-        return productOfferRepository.findAll().stream()
-                .map(productOfferMapper::toDTO)
+        return repository.findAll().stream()
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public Page<ProductOfferDTO> findAll(Pageable pageable) {
-        return productOfferRepository.findAll(pageable)
-                .map(productOfferMapper::toDTO);
+        return repository.findAll(pageable)
+                .map(mapper::toDTO);
     }
 
     @Override
     public Page<ProductOfferDTO> findByProductName(String productName, Pageable pageable) {
-        return productOfferRepository.findByProductNameContainingIgnoreCase(productName, pageable)
-                .map(productOfferMapper::toDTO);
+        return repository.findByProductNameContainingIgnoreCase(productName, pageable)
+                .map(mapper::toDTO);
     }
 
     @Override
     @Transactional
     public ProductOfferDTO changeState(UUID id) {
-        ProductOffer offer = productOfferRepository.findById(id)
+        ProductOffer offer = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Oferta no encontrada"));
 
         validator.validateCanEndOffer(offer);
         offer.cancel();
 
-        return productOfferMapper.toDTO(productOfferRepository.save(offer));
+        return mapper.toDTO(repository.save(offer));
+    }
+
+    @Override
+    @Transactional
+    public ProductOfferDTO extendOffer(UUID id, ProductOfferDTO offerDTO) {
+        ProductOffer existingOffer = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Oferta no encontrada"));
+
+        validator.validateExtendOffer(existingOffer, offerDTO);
+
+        // Aplica cambios según estado
+        String status = existingOffer.calculateStatus();
+        existingOffer.setEndDate(LocalDateTime.parse(offerDTO.getEndDate()));
+
+        if (status.equals("AGOTADA")) {
+            existingOffer.setUsesMax(offerDTO.getUsesMax());
+        }
+
+        return mapper.toDTO(repository.save(existingOffer));
+    }
+
+    @Override
+    @Transactional
+    public ProductOfferDTO incrementUsage(UUID offerId) {
+        ProductOffer offer = repository.findById(offerId)
+                .orElseThrow(() -> new IllegalArgumentException("Oferta no encontrada"));
+
+        // Validar si se puede incrementar
+        validator.validateCanIncrementUsage(offer);
+
+        // Incrementar usos
+        offer.setUsesQuantity(offer.getUsesQuantity() + 1);
+
+        // Si se agotó, actualizar estado (pero no modificar endDate)
+        if (offer.getUsesMax() > 0 && offer.getUsesQuantity() >= offer.getUsesMax()) {
+            offer.setEndDate(LocalDateTime.now()); // Opcional: Si quieres forzar el fin
+        }
+
+        return mapper.toDTO(repository.save(offer));
     }
 }
