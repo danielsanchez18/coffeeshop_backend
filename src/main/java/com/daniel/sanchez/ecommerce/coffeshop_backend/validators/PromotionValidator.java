@@ -43,18 +43,65 @@ public class PromotionValidator {
         validateProducts(promotionDTO.getProducts());
         validateNoOverlappingOffersOrPromotions(promotionDTO);
         validateDiscountLogic(promotionDTO);
-        validateUniquePromotionName(promotionDTO.getName());
+        validateUniquePromotionName(promotionDTO.getName(), null);
     }
 
     public void validateUpdatePromotion(UUID promotionId, PromotionDTO promotionDTO) {
         Promotion existingPromotion = getPromotionOrThrow(promotionId);
+
+        // Solo se pueden actualizar promociones en estado PROXIMA
+        if (!existingPromotion.calculateStatus().equals("PROXIMA")) {
+            throw new IllegalStateException("Solo se pueden actualizar promociones en estado PROXIMA");
+        }
+
+        // Validar que el nuevo usesMax no sea menor a los usos actuales
+        if (promotionDTO.getUsesMax() != null && promotionDTO.getUsesMax() < existingPromotion.getUsesQuantity()) {
+            throw new IllegalArgumentException("El nuevo límite de usos no puede ser menor al uso actual");
+        }
+
         validatePromotionDates(promotionDTO);
         validateDiscountTypeAndValue(promotionDTO);
+        validateUniquePromotionName(promotionDTO.getName(), promotionId);
 
         if (haveDatesChanged(existingPromotion, promotionDTO)) {
             validateProducts(promotionDTO.getProducts());
             validateDiscountLogic(promotionDTO);
+            validateNoOverlappingOffersOrPromotions(promotionDTO);
         }
+    }
+
+    // Valida que se pueda extender una promoción
+    public void validateExtendPromotion(Promotion existingPromotion, PromotionDTO promotionDTO) {
+        LocalDateTime newEndDate = LocalDateTime.parse(promotionDTO.getEndDate());
+        LocalDateTime existingEndDate = existingPromotion.getEndDate();
+        String status = existingPromotion.calculateStatus();
+
+        // --- Validaciones de Estado ---
+        if (status.equals("CANCELADA")) {
+            throw new IllegalStateException("No se puede extender una promoción cancelada");
+        }
+        if (!status.equals("ACTIVA") && !status.equals("TERMINADA")) {
+            throw new IllegalStateException("Solo se pueden extender promociones ACTIVAS o TERMINADAS");
+        }
+
+        // --- Validaciones de Fecha ---
+        if (!newEndDate.isAfter(existingEndDate)) {
+            throw new IllegalArgumentException("La nueva fecha de fin debe ser posterior a la actual");
+        }
+        if (LocalDateTime.now().isAfter(existingEndDate.plusHours(24))) {
+            throw new IllegalStateException("No se puede extender pasadas 24 horas de la fecha de fin");
+        }
+
+        // --- Validaciones de Solapamiento ---
+        List<PromotionProduct> promotionProducts = promotionProductRepository.findByPromotionId(existingPromotion.getId());
+
+        promotionProducts.forEach(pp -> {
+            UUID productId = pp.getProduct().getId();
+            if (productOfferRepository.existsByProductAndDateRange(productId, existingEndDate, newEndDate) ||
+                    promotionProductRepository.existsByProductAndDateRange(productId, existingEndDate, newEndDate)) {
+                throw new IllegalStateException("El producto % tiene ofertas/promociones posteriores a la fecha de fin actual.");
+            }
+        });
     }
 
     // Valida que se pueda finalizar una promoción
@@ -66,6 +113,20 @@ public class PromotionValidator {
         }
         if (promotion.getEndDate().isBefore(now)) {
             throw new IllegalStateException("La promoción ya ha terminado");
+        }
+    }
+
+    // Valida que se pueda incrementar el uso de una promoción
+    public void validateCanIncrementUsage(Promotion promotion) {
+        String status = promotion.calculateStatus();
+
+        if (!status.equals("ACTIVA") &&
+                !(status.equals("PROXIMA") && LocalDateTime.now().isAfter(promotion.getStartDate()))) {
+            throw new IllegalStateException("No se puede incrementar usos en este estado: " + status);
+        }
+
+        if (promotion.getUsesMax() > 0 && promotion.getUsesQuantity() >= promotion.getUsesMax()) {
+            throw new IllegalStateException("Límite de usos alcanzado");
         }
     }
 
@@ -151,7 +212,10 @@ public class PromotionValidator {
                 }
                 break;
             case "PRECIO_FIJO":
-                // No validamos discountValue aquí, se calcula en validateDiscountLogic
+                double originalPrice = calculateOriginalPrice(promotionDTO.getProducts());
+                if (promotionDTO.getDiscountValue() <= 0 || promotionDTO.getDiscountValue() >= originalPrice) {
+                    throw new IllegalArgumentException("El precio fijo debe ser mayor que 0 y menor al precio original del combo");
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Tipo de descuento no válido. Use PORCENTAJE, DESCUENTO_DIRECTO o PRECIO_FIJO");
@@ -183,8 +247,9 @@ public class PromotionValidator {
     }
 
     // Validación: Nombre de promoción único
-    private void validateUniquePromotionName(String name) {
-        if (promotionRepository.existsByName(name)) {
+    private void validateUniquePromotionName(String name, UUID existingPromotionId) {
+        Promotion existing = promotionRepository.findByName(name);
+        if (existing != null && (existingPromotionId == null || !existing.getId().equals(existingPromotionId))) {
             throw new IllegalArgumentException("El nombre de la promoción ya existe");
         }
     }

@@ -70,7 +70,7 @@ public class PromotionController {
     @GetMapping("/name/{name}")
     public ResponseEntity<?> findByName(@PathVariable String name, @PageableDefault(size = 10, page = 0) Pageable pageable) {
         try {
-            List<PromotionDTO> promotions = promotionService.findByName(name);
+            Page<PromotionDTO> promotions = promotionService.findByName(name, pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Promociones encontradas exitosamente", promotions));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
@@ -129,13 +129,52 @@ public class PromotionController {
         }
     }
 
-    @GetMapping("/product/{productId}")
-    public ResponseEntity<?> findByProduct(@PathVariable UUID productId) {
+    @GetMapping("/state-page/{active}")
+    public ResponseEntity<?> findByStatePageable(@PathVariable boolean active, @PageableDefault(size = 10, page = 0) Pageable pageable) {
         try {
-            List<PromotionDTO> promotions = promotionService.findByProduct(productId);
+            Page<PromotionDTO> promotions = promotionService.findByStatePageable(active, pageable);
             return ResponseEntity.ok(ResponseUtil.successResponse("Promociones encontradas exitosamente", promotions));
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
         }
     }
+
+    @GetMapping("/product/{productName}")
+    public ResponseEntity<?> findByProductName(@PathVariable String productName, @PageableDefault(size = 10, page = 0) Pageable pageable) {
+        try {
+            Page<PromotionDTO> promotions = promotionService.findByProductName(productName, pageable);
+            return ResponseEntity.ok(ResponseUtil.successResponse("Promociones encontradas exitosamente", promotions));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseUtil.errorResponse(ex.getMessage()));
+        }
+    }
+
+    @PutMapping("/extend/{id}")
+    public ResponseEntity<?> extendPromotion(@PathVariable UUID id, @RequestBody PromotionDTO promotionDTO) {
+        try {
+            PromotionDTO extendedPromotion = promotionService.extendPromotion(id, promotionDTO);
+            return ResponseEntity.ok(ResponseUtil.successResponse("Promoción extendida exitosamente", extendedPromotion));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseUtil.errorResponse(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseUtil.errorResponse("Error al extender la promoción"));
+        }
+    }
+
+    @PutMapping("/increment-usage/{id}")
+    public ResponseEntity<?> incrementUsage(@PathVariable UUID id) {
+        try {
+            PromotionDTO updatedPromotion = promotionService.incrementUsage(id);
+            return ResponseEntity.ok(ResponseUtil.successResponse("Uso de la promoción incrementado exitosamente", updatedPromotion));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseUtil.errorResponse(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseUtil.errorResponse("Error al incrementar el uso de la promoción"));
+        }
+    }
+
 }

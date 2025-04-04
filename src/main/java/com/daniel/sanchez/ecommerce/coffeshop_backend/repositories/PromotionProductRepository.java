@@ -1,14 +1,18 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.repositories;
 
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.PromotionProduct;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Repository
 public interface PromotionProductRepository extends JpaRepository<PromotionProduct, Long> {
 
     // Verifica si un producto tiene promociones activas ahora
@@ -36,7 +40,8 @@ public interface PromotionProductRepository extends JpaRepository<PromotionProdu
 
     List<PromotionProduct> findByPromotionId(UUID promotionId);
 
-    List<PromotionProduct> findByProductId(UUID productId);
+    @Query("SELECT pp FROM PromotionProduct pp JOIN pp.product p WHERE p.name LIKE %:productName%")
+    Page<PromotionProduct> findByProductName(@Param("productName") String productName, Pageable pageable);
 
     void deleteByPromotionId(UUID promotionId);
 

@@ -32,7 +32,11 @@ public class PromotionMapper {
         dto.setDiscountValue(promotion.getDiscountValue());
         dto.setStartDate(promotion.getStartDate().toString());
         dto.setEndDate(promotion.getEndDate().toString());
-        dto.setActive(promotion.isActive());
+
+        dto.setUsesMax(promotion.getUsesMax());
+        dto.setUsesQuantity(promotion.getUsesQuantity());
+        dto.setState(promotion.calculateStatus());
+
         dto.setAudit(promotion.getAudit());
 
         // Mapeo de productos
@@ -61,6 +65,7 @@ public class PromotionMapper {
         promotion.setDiscountValue(dto.getDiscountValue());
         promotion.setStartDate(LocalDateTime.parse(dto.getStartDate()));
         promotion.setEndDate(LocalDateTime.parse(dto.getEndDate()));
+        promotion.setUsesMax(dto.getUsesMax());
         return promotion;
     }
 
@@ -68,38 +73,23 @@ public class PromotionMapper {
         if (promotionDTO.getName() != null) {
             entity.setName(promotionDTO.getName());
         }
-
         if (promotionDTO.getDescription() != null) {
             entity.setDescription(promotionDTO.getDescription());
         }
-
         if (promotionDTO.getStartDate() != null) {
             entity.setStartDate(LocalDateTime.parse(promotionDTO.getStartDate()));
         }
-
         if (promotionDTO.getEndDate() != null) {
             entity.setEndDate(LocalDateTime.parse(promotionDTO.getEndDate()));
         }
-
         if (promotionDTO.getDiscountType() != null) {
             entity.setDiscountType(promotionDTO.getDiscountType());
         }
-
         if (promotionDTO.getDiscountValue() != null) {
             entity.setDiscountValue(promotionDTO.getDiscountValue());
         }
-
-        // Actualización condicional del estado (si el DTO lo incluye)
-        if (promotionDTO.isActive() != entity.isActive()) {
-            if (!promotionDTO.isActive()) {
-                entity.endNow(); // Desactiva la promoción
-            } else {
-                // Reactivación (solo si las fechas son válidas)
-                LocalDateTime now = LocalDateTime.now();
-                if (entity.getEndDate().isAfter(now)) {
-                    entity.setStartDate(now);
-                }
-            }
+        if (promotionDTO.getUsesMax() != null) {
+            entity.setUsesMax(promotionDTO.getUsesMax());
         }
     }
 

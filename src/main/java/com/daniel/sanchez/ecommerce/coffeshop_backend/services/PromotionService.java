@@ -19,13 +19,19 @@ public interface PromotionService {
 
     PromotionDTO changeState(UUID id);
 
+    PromotionDTO extendPromotion(UUID id, PromotionDTO promotionDTO);
+
+    PromotionDTO incrementUsage(UUID id);
+
     void delete(UUID id);
 
     PromotionDTO findById(UUID id);
 
-    List<PromotionDTO> findByName(String name);
+    Page<PromotionDTO> findByName(String name, Pageable pageable);
 
-    List<PromotionDTO> findByProduct(UUID productId);
+    Page<PromotionDTO> findByProductName(String productName, Pageable pageable);
+
+    Page<PromotionDTO> findByStatePageable(boolean active, Pageable pageable);
 
     List<PromotionDTO> findByState(boolean active);
 

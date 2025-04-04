@@ -41,8 +41,13 @@ public class PromotionDTO {
     @NotEmpty(message = "La promoción debe incluir productos")
     private List<PromotionProductDTO> products;
 
+    private Integer usesMax;
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private boolean active;
+    private Integer usesQuantity;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String state;
 
     private Audit audit;
 

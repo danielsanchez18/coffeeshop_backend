@@ -58,8 +58,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional
     public PromotionDTO update(UUID id, PromotionDTO promotionDTO) {
-        Promotion existing = promotionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Promoción no encontrada"));
+        Promotion existing = getPromotionOrThrow(id);
 
         promotionValidator.validateUpdatePromotion(id, promotionDTO);
         promotionMapper.updateEntityFromDTO(promotionDTO, existing);
@@ -91,7 +90,36 @@ public class PromotionServiceImpl implements PromotionService {
         Promotion promotion = getPromotionOrThrow(id);
 
         promotionValidator.validateCanEndPromotion(promotion);
-        promotion.endNow();
+        promotion.cancel();
+
+        return promotionMapper.toDTO(promotionRepository.save(promotion));
+    }
+
+    @Override
+    @Transactional
+    public PromotionDTO extendPromotion(UUID id, PromotionDTO promotionDTO) {
+        Promotion existingPromotion = getPromotionOrThrow(id);
+
+        promotionValidator.validateExtendPromotion(existingPromotion, promotionDTO);
+
+        // Aplicar cambios según estado
+        String status = existingPromotion.calculateStatus();
+        existingPromotion.setEndDate(LocalDateTime.parse(promotionDTO.getEndDate()));
+
+        if (status.equals("AGOTADA")) {
+            existingPromotion.setUsesMax(promotionDTO.getUsesMax());
+        }
+
+        return promotionMapper.toDTO(promotionRepository.save(existingPromotion));
+    }
+
+    @Override
+    @Transactional
+    public PromotionDTO incrementUsage(UUID id) {
+        Promotion promotion = getPromotionOrThrow(id);
+
+        promotionValidator.validateCanIncrementUsage(promotion);
+        promotion.incrementUsage();
 
         return promotionMapper.toDTO(promotionRepository.save(promotion));
     }
@@ -111,18 +139,18 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
-    public List<PromotionDTO> findByName(String name) {
-        return promotionRepository.findByNameContainingIgnoreCase(name).stream()
-                .map(promotionMapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<PromotionDTO> findByName(String name, Pageable pageable) {
+        return promotionRepository.findByNameContainingIgnoreCase(name, pageable)
+                .map(promotionMapper::toDTO);
     }
 
     @Override
-    public List<PromotionDTO> findByProduct(UUID productId) {
-        return promotionProductRepository.findByProductId(productId).stream()
-                .map(PromotionProduct::getPromotion)
-                .map(promotionMapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<PromotionDTO> findByProductName(String productName, Pageable pageable) {
+        return promotionProductRepository.findByProductName(productName, pageable)
+                .map(pp -> {
+                    Promotion promotion = pp.getPromotion();
+                    return promotionMapper.toDTO(promotion);
+                });
     }
 
     @Override
@@ -135,6 +163,16 @@ public class PromotionServiceImpl implements PromotionService {
                 promotionRepository.findInactivePromotions(now).stream()
                         .map(promotionMapper::toDTO)
                         .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<PromotionDTO> findByStatePageable(boolean active, Pageable pageable) {
+        LocalDateTime now = LocalDateTime.now();
+        return active ?
+                promotionRepository.findActivePromotions(now, pageable)
+                        .map(promotionMapper::toDTO) :
+                promotionRepository.findInactivePromotions(now, pageable)
+                        .map(promotionMapper::toDTO);
     }
 
     // --- Métodos privados de ayuda ---
