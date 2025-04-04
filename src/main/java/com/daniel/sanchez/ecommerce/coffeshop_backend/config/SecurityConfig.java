@@ -33,7 +33,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/users").permitAll() // endpoints de autenticación
+                        .requestMatchers("/auth/**").permitAll() // endpoints de autenticación
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(userDetailsService);

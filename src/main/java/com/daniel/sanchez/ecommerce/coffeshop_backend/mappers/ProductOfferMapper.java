@@ -25,6 +25,10 @@ public class ProductOfferMapper {
         dto.setStartDate(offer.getStartDate().toString());
         dto.setEndDate(offer.getEndDate().toString());
 
+        dto.setUsesMax(offer.getUsesMax());
+        dto.setUsesQuantity(offer.getUsesQuantity());
+        dto.setState(offer.getState());
+
         // Estado calculado (usa isActive() de la entidad)
         dto.setActive(offer.isActive());
 
@@ -48,6 +52,8 @@ public class ProductOfferMapper {
         offer.setStartDate(LocalDateTime.parse(dto.getStartDate()));
         offer.setEndDate(LocalDateTime.parse(dto.getEndDate()));
 
+        offer.setUsesMax(dto.getUsesMax());
+
         return offer;
     }
 
@@ -60,6 +66,9 @@ public class ProductOfferMapper {
         }
         if (dto.getEndDate() != null) {
             entity.setEndDate(LocalDateTime.parse(dto.getEndDate()));
+        }
+        if (dto.getUsesMax() != null) {
+            entity.setUsesMax(dto.getUsesMax());
         }
     }
 

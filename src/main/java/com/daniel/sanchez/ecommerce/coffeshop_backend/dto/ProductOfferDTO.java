@@ -1,6 +1,7 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.dto;
 
 import com.daniel.sanchez.ecommerce.coffeshop_backend.entities.Audit;
+import com.daniel.sanchez.ecommerce.coffeshop_backend.enums.OfferState;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -23,8 +24,14 @@ public class ProductOfferDTO {
     private Double discountPrice;
     private String startDate;
     private String endDate;
+    private Integer usesMax;
 
-    // Output: Estado calculado (no pausada + dentro de fechas)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Integer usesQuantity;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private OfferState state;
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private boolean active;
 

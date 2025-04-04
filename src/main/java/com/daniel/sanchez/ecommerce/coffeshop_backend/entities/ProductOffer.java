@@ -1,5 +1,6 @@
 package com.daniel.sanchez.ecommerce.coffeshop_backend.entities;
 
+import com.daniel.sanchez.ecommerce.coffeshop_backend.enums.OfferState;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -28,17 +29,60 @@ public class ProductOffer {
     @Column(nullable = false)
     private LocalDateTime endDate;
 
+    @Column(nullable = false)
+    private Integer usesMax = 0; // 0 = ilimitado
+
+    @Column(nullable = false)
+    private Integer usesQuantity = 0; // 0 = sin usar
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OfferState state = OfferState.PROXIMA;
+
     @Embedded
     private Audit audit = new Audit();
 
-    public boolean isActive() {
+    // Método para calcular y actualizar el estado
+    public void updateState() {
         LocalDateTime now = LocalDateTime.now();
-        return !now.isBefore(startDate) && !now.isAfter(endDate);
+
+        if (state == OfferState.CANCELADA) {
+            return; // Si fue cancelada manualmente, no cambia
+        }
+
+        if (usesQuantity >= usesMax) {
+            state = OfferState.AGOTADA;
+            this.endDate = now; // Opcional: forzar fin inmediato
+            return;
+        }
+
+        if (now.isBefore(startDate)) {
+            state = OfferState.PROXIMA;
+        } else if (!now.isAfter(endDate)) {
+            state = OfferState.ACTIVA;
+        } else {
+            state = OfferState.TERMINADA;
+        }
     }
 
-    // Método para finalizar la oferta
-    public void endNow() {
-        this.endDate = LocalDateTime.now(); // Fuerza el fin inmediato
+    // Método para incrementar usos (se llamará desde el servicio de pedidos)
+    public void incrementUsage() {
+        if (usesQuantity < usesMax) {
+            usesQuantity++;
+            updateState(); // Recalcula el estado después de incrementar
+        }
+    }
+
+    // Método para cancelar manualmente
+    public void cancel() {
+        this.state = OfferState.CANCELADA;
+        this.endDate = LocalDateTime.now(); // Opcional: forzar fin inmediato
+    }
+
+    // Método para verificar si está activa (ahora considera estado y usos)
+    public boolean isActive() {
+        updateState(); // Asegura que el estado esté actualizado
+        return state == OfferState.ACTIVA;
     }
 
 }
